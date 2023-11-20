@@ -1,14 +1,18 @@
-# gitpod.io/#github.com/CaravanaCloud/red-pod
+# gitpod.io/#github.com/CaravanaCloud/k7r-pod
 image:
   file: .gitpod.Dockerfile
+
+additionalRepositories:
+    - url: https://github.com/aws-ia/terraform-aws-eks-blueprints-addon
+      checkoutLocation: terraform-aws-eks-blueprints-addon
 
 tasks:
   - name: Welcome
     init: |
       mkdir -p "$HOME/.kube"
       ln -sf "$GITPOD_REPO_ROOT/auth/kubeconfig" "$HOME/.kube/config"
-      echo "Init okd-pod at $(date)"
-    command: echo "Hello red-pod :)"
+      echo "Init k7r-pod at $(date)"
+    command: echo "Let's karpenter :)"
 
 ports:
   - port: 8080
