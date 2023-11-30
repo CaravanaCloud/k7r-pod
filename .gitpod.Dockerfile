@@ -83,7 +83,13 @@ RUN bash -c "curl -L ${ODO_URL} -o odo \
 RUN bash -c "brew install operator-sdk"
 
 # Helm, Terraform, Terragrunt
-RUN bash -c "brew install helm terraform terragrunt"
+# RUN bash -c "brew install helm terraform terragrunt"
+RUN bash -c 'curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null'
+RUN bash -c 'sudo apt-get install apt-transport-https --yes'
+RUN bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list'
+RUN bash -c 'sudo apt-get update'
+RUN bash -c 'sudo apt-get install helm'
+
 
 # KAN https://github.com/redhat-developer/kam
 
