@@ -14,7 +14,7 @@ jobs:
 
     env:
       # Parameters
-      OCP_BASE_DOMAIN: "temp.strigus.cloud"
+      OCP_BASE_DOMAIN: "devcluster.openshift.com"
       INSTANCE_TYPE: "t3a.2xlarge"
       AWS_REGION: "us-east-1"
       ENV_ID: ${{ github.event.inputs.env_id }}
