@@ -9,8 +9,9 @@ RUN bash -c "sudo apt-get update"
 RUN bash -c "sudo pip install --upgrade pip"
 
 # Java
-ARG JAVA_SDK="17.0.7-amzn"
+ARG JAVA_VENDOR="amzn"
 RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
+    && JAVA_SDK=$(sdk list java | grep -o '[a-zA-Z0-9_\-\.]*-$JAVA_VENDOR' | head -1) \
     && sdk install java $JAVA_SDK \
     && sdk default java $JAVA_SDK \
     && sdk install quarkus \
