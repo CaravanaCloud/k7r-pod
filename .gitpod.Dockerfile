@@ -2,20 +2,15 @@
 FROM gitpod/workspace-full
 
 # System
-RUN bash -c "sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 3EFE0E0A2F2F60AA"
-RUN bash -c "echo 'deb http://ppa.launchpad.net/tektoncd/cli/ubuntu jammy main'|sudo tee /etc/apt/sources.list.d/tektoncd-ubuntu-cli.list"
-RUN bash -c "sudo install-packages direnv gettext mysql-client gnupg golang"
-RUN bash -c "sudo apt-get update"
-RUN bash -c "sudo pip install --upgrade pip"
+# RUN bash -c "sudo install-packages direnv gettext mysql-client gnupg golang"
+# RUN bash -c "sudo apt-get update"
+# RUN bash -c "sudo pip install --upgrade pip"
 
 # Java
-ARG JAVA_VENDOR="amzn"
-RUN bash -c ". /home/gitpod/.sdkman/bin/sdkman-init.sh \
-    && JAVA_SDK=$(sdk list java | grep -o '[a-zA-Z0-9_\-\.]*-$JAVA_VENDOR' | head -1) \
-    && sdk install java $JAVA_SDK \
-    && sdk default java $JAVA_SDK \
-    && sdk install quarkus \
-    && sdk install maven \
+RUN bash -c "source /home/gitpod/.sdkman/bin/sdkman-init.sh \
+    && sdk list java | grep -o '[a-zA-Z0-9_\-\.]*-amzn' | head -1 > java.version"
+RUN bash -c "source /home/gitpod/.sdkman/bin/sdkman-init.sh \
+    && sdk install java $(cat java.version) \
     "
 
 # OpenShift Installer
@@ -50,65 +45,6 @@ RUN bash -c "mkdir -p '/tmp/rosa' \
     && sudo mv  '/tmp/rosa/rosa' '/usr/local/bin/' \
     && rm '/tmp/rosa/rosa-linux.tar.gz' \
     "
-
-# odo
-ARG ODO_URL="https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/odo/v3.10.0/odo-linux-amd64"
-RUN bash -c "curl -L ${ODO_URL} -o odo \
-    && curl -L ${ODO_URL}.sha256 -o odo.sha256 \
-    && echo "$(<odo.sha256)  odo" | shasum -a 256 --check \
-    && sudo install -o root -g root -m 0755 odo /usr/local/bin/odo \
-    "
-
-# OpenShift Local (crc) - no virt flags
-# ARG CRC_URL="https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz"
-# RUN bash -c "mkdir -p '/tmp/crc' \
-#     && wget -nv -O '/tmp/crc/crc-linux-amd64.tar.xz' '${CRC_URL}' \
-#     && tar xvf '/tmp/crc/crc-linux-amd64.tar.xz' -C '/tmp/crc' \
-#     && find '/tmp/crc' \
-#     && sudo mv /tmp/crc/crc-linux-*/crc '/usr/local/bin/' \
-#     && rm '/tmp/crc/crc-linux-amd64.tar.xz' \
-#     "
-
-
-# krew
-# RUN OS="$(uname | tr '[:upper:]' '[:lower:]')" && \
-#     ARCH="$(uname -m | sed -e 's/x86_64/amd64/' -e 's/\(arm\)\(64\)\?.*/\1\2/' -e 's/aarch64$/arm64/')" && \
-#     curl -fsSLO "https://github.com/kubernetes-sigs/krew/releases/latest/download/krew.tar.gz" && \
-#     tar zxvf krew.tar.gz && \
-#     KREW=./krew-"${OS}_${ARCH}" && \
-#     "$KREW" install krew && \
-#     cp $HOME/.krew/bin/kubectl-krew /usr/local/bin/
-# 
-
-# Operator SDK
-RUN bash -c "brew install operator-sdk"
-
-# Helm, Terraform, Terragrunt
-# RUN bash -c "brew install helm terraform terragrunt"
-RUN bash -c 'curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null'
-RUN bash -c 'sudo apt-get install apt-transport-https --yes'
-RUN bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list'
-RUN bash -c 'sudo apt-get update'
-RUN bash -c 'sudo apt-get install helm'
-
-
-# KAN https://github.com/redhat-developer/kam
-
-# Tackle
-# RUN bash -c 'git clone "https://github.com/kubernetes/test-infra" "/tmp/test-infra" \
-#    && cd /tmp/test-infra/prow/cmd/tackle \
-#    && go build -o tackle \
-#    && sudo mv tackle /usr/sbin/tackle \
-#    '
-
-# ArgoCD and Tekton
-RUN bash -c "brew install argocd"
-RUN bash -c "sudo apt install -y tektoncd-cli \
-    && tkn version"
-
-# Kustomize
-RUN bash -c "curl -s 'https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh'  | bash"
-
 
 
 # AWS CLIs
