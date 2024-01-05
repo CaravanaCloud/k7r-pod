@@ -1,4 +1,4 @@
-name: Create OKD Cluster on AWS (single node / temporary)
+name: Create OKD Cluster on AWS
 
 on:
   workflow_dispatch:
