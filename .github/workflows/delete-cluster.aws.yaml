@@ -1,0 +1,142 @@
+name: Create OKD Cluster on AWS (single node / temporary)
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_id:
+        description: "Environment ID"
+        required: true
+        default: "k7r"
+
+jobs:
+  create-okd-cluster:
+    runs-on: ubuntu-latest
+
+    env:
+      # Parameters
+      OCP_BASE_DOMAIN: "devcluster.openshift.com"
+      INSTANCE_TYPE: "t3a.2xlarge"
+      AWS_REGION: "us-east-1"
+      ENV_ID: ${{ github.event.inputs.env_id }}
+      CLUSTER_NAME: ${{ github.event.inputs.env_id }}okdc
+      # Secrets
+      PULL_SECRET: ${{ secrets.TEMP_PULL_SECRET }}
+      SSH_KEY: ${{ secrets.TEMP_SSH_KEY }}
+      
+    steps:
+    - name: Add PWD to Path
+      run: echo "$PWD" >> $GITHUB_PATH
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.K7R_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.k7R_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Check AWS auth
+      run: aws sts get-caller-identity
+        
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Install OKD installer 
+      env:
+        INSTALL_URL: "https://github.com/okd-project/okd/releases/download/4.14.0-0.okd-2023-12-01-225814/openshift-install-linux-4.14.0-0.okd-2023-12-01-225814.tar.gz"        
+      run: |
+        mkdir -p "/tmp/openshift-install"
+        wget -nv -O "/tmp/openshift-install/openshift-install-linux.tar.gz" "${INSTALL_URL}"
+        tar zxvf "/tmp/openshift-install/openshift-install-linux.tar.gz" -C "/tmp/openshift-install"
+        rm "/tmp/openshift-install/openshift-install-linux.tar.gz"
+        mv "/tmp/openshift-install/openshift-install" "."
+    
+    - name: Check OKD installer
+      run: openshift-install version
+
+    - name: Install CCOCTL  
+      env:
+        INSTALL_URL: "https://github.com/okd-project/okd/releases/download/4.14.0-0.okd-2023-12-01-225814/ccoctl-linux-4.14.0-0.okd-2023-12-01-225814.tar.gz"        
+      run: |
+        mkdir -p "/tmp/ccoctl"
+        wget -nv -O "/tmp/ccoctl/ccoctl-linux.tar.gz" "${INSTALL_URL}"
+        tar zxvf "/tmp/ccoctl/ccoctl-linux.tar.gz" -C "/tmp/ccoctl"
+        mv  "/tmp/ccoctl/ccoctl" "."
+        rm "/tmp/ccoctl/ccoctl-linux.tar.gz"
+
+    - name: Check CCOCTL
+      run: ccoctl help
+
+    - name: Install OKD clients
+      env:
+        INSTALL_URL: "https://github.com/okd-project/okd/releases/download/4.14.0-0.okd-2023-12-01-225814/openshift-client-linux-4.14.0-0.okd-2023-12-01-225814.tar.gz"
+      run: |
+        mkdir -p "/tmp/openshift-client" 
+        wget -nv -O "/tmp/openshift-client/openshift-client-linux.tar.gz" "${INSTALL_URL}" 
+        tar zxvf "/tmp/openshift-client/openshift-client-linux.tar.gz" -C "/tmp/openshift-client" 
+        rm "/tmp/openshift-client/openshift-client-linux.tar.gz" 
+        mv "/tmp/openshift-client/oc" "." 
+        mv "/tmp/openshift-client/kubectl" "."
+
+    - name: Check OKD clients
+      run: oc version --client  
+  
+    - name: Check OKD installer
+      run: openshift-install version
+
+    - name: Check file tree [DEBUG]
+      run: find .
+
+    - name: Generate OKD install-config
+      run: envsubst < "install-config.aws-singlenode.env.yaml" > "install-config.yaml"
+
+    - name: Check OKD install-config [DEBUG/REMOVE]
+      run: cat install-config.yaml
+
+    - name: Encrypt install-config
+      run: |
+        echo "${{ secrets.DEV_ARTIFACTS_GPG_PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 install-config.yaml
+ 
+    - name: Store OKD install-config
+      uses: actions/upload-artifact@v4
+      with:
+        name: install-config
+        path: install-config.yaml.gpg
+
+
+    - name: Extract credential requests
+      run: |
+        mkdir -p "credentials-requests"
+        RELEASE_IMAGE=$(./openshift-install version | awk '/release image/ {print $3}')
+        echo "RELEASE_IMAGE=${RELEASE_IMAGE}" 
+        oc adm release extract \
+          --from=$RELEASE_IMAGE \
+          --credentials-requests \
+          --included \
+          --install-config=./install-config.yaml \
+          --to="credentials-requests"
+
+    - name: Create CCO resources
+      run: |
+        ccoctl aws create-all \
+          --credentials-requests-dir="credentials-requests" \
+          --name="${ENV_ID}cco" \
+          --region="$AWS_REGION" \
+          --output-dir="ccoctl-output"
+
+    - name: Create OCP manifests
+      run: |
+        mkdir -p "manifests"
+        openshift-install create manifests
+
+    - name: Check file tree [DEBUG]
+      run: find .
+
+    - name: Merge manifests
+      run: cp ./ccoctl-output/manifests/* ./manifests/
+  
+    - name: Create OKD cluster
+      run: openshift-install delete cluster --log-level debug > delete-cluster.out.txt 2>&1
+      continue-on-error: true
+    
+    - name: Check file tree [DEBUG]
+      run: find .
