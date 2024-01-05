@@ -135,14 +135,19 @@ jobs:
       run: cp ./ccoctl-output/manifests/* ./manifests/
   
     - name: Create OKD cluster
-      run: openshift-install create cluster --log-level debug
+      run: openshift-install create cluster --log-level debug > create-cluster.out.txt 2>&1
       continue-on-error: true
     
-    
-    - name: Wait for cluster install to verify
+    - name: Wait for cluster install
       run: openshift-install wait-for install-complete
       continue-on-error: true
       timeout-minutes: 2
+    
+    - name: Verify cluster access
+      run: oc get nodes
+      env:
+        kubeconfig: auth/kubeconfig
+      continue-on-error: true
 
     - name: Encrypt install log
       run: |
@@ -164,5 +169,15 @@ jobs:
         name: kubeconfig
         path: auth/kubeconfig.gpg
     
+    - name: Encrypt kubeadmin
+      run: |
+        echo "${{ secrets.DEV_ARTIFACTS_GPG_PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 auth/kubeadmin-password
+
+    - name: Store kubeadmin
+      uses: actions/upload-artifact@v4
+      with:
+        name: kubeadmin
+        path: auth/kubeadmin-password.gpg
+       
     - name: Check file tree [DEBUG]
       run: find .
