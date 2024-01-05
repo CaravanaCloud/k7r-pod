@@ -155,26 +155,31 @@ jobs:
     
     - name: Store OKD install log
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       with:
         name: install-log
         path: .openshift_install.log.gpg
     
     - name: Encrypt kubeconfig
+      continue-on-error: true
       run: |
         echo "${{ secrets.DEV_ARTIFACTS_GPG_PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 auth/kubeconfig
 
     - name: Store kubeconfig
+      continue-on-error: true
       uses: actions/upload-artifact@v4
       with:
         name: kubeconfig
         path: auth/kubeconfig.gpg
     
     - name: Encrypt kubeadmin
+      continue-on-error: true
       run: |
         echo "${{ secrets.DEV_ARTIFACTS_GPG_PASSPHRASE }}" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 auth/kubeadmin-password
 
     - name: Store kubeadmin
       uses: actions/upload-artifact@v4
+      continue-on-error: true
       with:
         name: kubeadmin
         path: auth/kubeadmin-password.gpg
