@@ -137,6 +137,10 @@ jobs:
     - name: Create OKD cluster
       run: openshift-install create cluster --log-level debug > create-cluster.out.txt 2>&1
       continue-on-error: true
+
+    - name: DEBUG OKD CLUSTER [UNSAFE / DELETE]
+      run: cat create-cluster.out.txt
+      continue-on-error: true
     
     - name: Wait for cluster install
       run: openshift-install wait-for install-complete
