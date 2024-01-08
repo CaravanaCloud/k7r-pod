@@ -150,7 +150,7 @@ jobs:
     - name: Verify cluster access
       run: oc get nodes
       env:
-        kubeconfig: auth/kubeconfig
+        KUBECONFIG: ./auth/kubeconfig
       continue-on-error: true
 
     - name: Encrypt install log
