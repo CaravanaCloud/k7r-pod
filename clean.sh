@@ -1,0 +1,9 @@
+rm -f *.tfvars.json
+rm -f terraform.*
+rm -f .openmshift_install_state.json
+rm -f .openshift_create-cluster.log
+rm -f .openshift_install.log
+rm -rf tls
+rm -f metadata.json
+rm -f payload.json
+rm -f log-bundle*.tar.gz

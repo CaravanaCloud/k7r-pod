@@ -7,3 +7,9 @@ bin/oc
 bin/openshift-install
 bin/kubectl
 bin/ccoctl
+
+terraform.*
+metadata.json
+tls
+terraform
+auth
