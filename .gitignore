@@ -8,6 +8,8 @@ bin/openshift-install
 bin/kubectl
 bin/ccoctl
 
+bootstrap.tfvars.json
+cluster.tfvars.json
 terraform.*
 metadata.json
 tls
