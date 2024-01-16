@@ -33,3 +33,7 @@ vscode:
     - ms-toolsai.jupyter
     - esbenp.prettier-vscode
 
+# https://github.com/CaravanaCloud/sitting-ducks
+additionalRepositories:
+  - url: https://github.com/CaravanaCloud/sitting-ducks
+additionalRepositories:

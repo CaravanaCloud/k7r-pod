@@ -1,1 +1,9 @@
 .env*
+.openshift*
+
+install-config.yaml
+
+bin/oc
+bin/openshift-install
+bin/kubectl
+bin/ccoctl
