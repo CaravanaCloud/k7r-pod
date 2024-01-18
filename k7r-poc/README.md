@@ -1,3 +1,1 @@
-# Disable OpenShift Cluster Autoscaler
-
-oc delete ClusterAutoscaler default
+Karpenter Proof-Of-Concept

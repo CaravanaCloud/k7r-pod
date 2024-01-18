@@ -21,7 +21,8 @@ aws sts get-caller-identity
 
 # Generate install config
 envsubst < "install-config.aws-default.env.yaml" > "install-config.yaml"
-cp "install-config.yaml" "install-config.bak.yaml" 
+DATE_STAMP=$(date +%Y%m%d%H%M%S)
+cp "install-config.yaml" "install-config.${DATE_STAMP}.yaml" 
 
 echo "Creating cluster..."
 sleep 5
