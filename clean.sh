@@ -7,3 +7,6 @@ rm -rf tls
 rm -f metadata.json
 rm -f payload.json
 rm -f log-bundle*.tar.gz
+rm -rf k7r-poc/.*.json
+rm -rf .*.csv
+rm -rf data/*
