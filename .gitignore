@@ -15,3 +15,7 @@ metadata.json
 tls
 terraform
 auth
+
+
+.*.json
+.*.csv

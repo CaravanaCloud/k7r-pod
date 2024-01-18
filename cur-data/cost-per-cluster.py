@@ -31,6 +31,7 @@ df = pd.concat(dfs, ignore_index=True)
 columns = ['bill_payer_account_id', 
         'identity_line_item_id', 
         'resource_tags',
+        'line_item_unblended_cost',
         'pricing_public_on_demand_cost']
 df = df[columns]
 
@@ -49,12 +50,12 @@ df[['user_name',
     }))
 
 # Cleanup data
-# Remove empty user name
-df = df[df['user_name'].notnull()]
+df = df[df['user_cluster_name'].notnull()]
 
-# Print results
-df = df.groupby('user_name')['pricing_public_on_demand_cost'].sum().reset_index()
+# Calculate groupby sum
+df = df.groupby('user_cluster_name')['line_item_unblended_cost'].sum().reset_index()
 
-
+# save to csv
+# df.to_csv('../.cost-per-cluster.csv', index=False)
 
 print(df)
