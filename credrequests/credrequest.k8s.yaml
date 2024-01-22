@@ -1,0 +1,27 @@
+#  oc create namespace openshift-cloud-credential-operator
+apiVersion: cloudcredential.openshift.io/v1
+kind: CredentialsRequest
+metadata:
+  labels:
+    controller-tools.k8s.io: "1.0"
+  name: karpenter-aws
+  namespace: openshift-cloud-credential-operator
+spec:
+  providerSpec:
+    apiVersion: cloudcredential.openshift.io/v1
+    kind: AWSProviderSpec
+    statementEntries:
+      - action:
+          - s3:*
+          - ssm:*
+          - ec2:*
+          - pricing:*
+          - iam:*
+        effect: Allow
+        resource: '*'
+  secretRef:
+    name: karpenter-aws-credentials
+    namespace: karpenter
+  serviceAccountNames:
+    - karpenter
+

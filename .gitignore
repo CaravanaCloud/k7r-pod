@@ -19,3 +19,8 @@ auth
 
 .*.json
 .*.csv
+
+cco-outputs-irsa
+ccoctl-output
+credentials-requests
+.*.yaml

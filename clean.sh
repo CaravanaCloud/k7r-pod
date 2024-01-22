@@ -9,4 +9,6 @@ rm -f payload.json
 rm -f log-bundle*.tar.gz
 rm -rf k7r-poc/.*.json
 rm -rf .*.csv
+rm -rf .*.yaml
 rm -rf data/*
+rm -rf ccoctl-outputs-irsa

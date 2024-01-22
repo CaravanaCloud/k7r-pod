@@ -22,7 +22,16 @@ aws sts get-caller-identity
 # Generate install config
 envsubst < "install-config.aws-default.env.yaml" > "install-config.yaml"
 DATE_STAMP=$(date +%Y%m%d%H%M%S)
-cp "install-config.yaml" "install-config.${DATE_STAMP}.yaml" 
+cp "install-config.yaml" ".install-config.${DATE_STAMP}.yaml" 
+
+RELEASE_IMAGE=$(./openshift-install version | awk '/release image/ {print $3}')
+        echo "RELEASE_IMAGE=${RELEASE_IMAGE}" 
+        oc adm release extract \
+          --from=$RELEASE_IMAGE \
+          --credentials-requests \
+          --included \
+          --install-config=./install-config.yaml \
+          --to="credentials-requests"
 
 echo "Creating cluster..."
 sleep 5

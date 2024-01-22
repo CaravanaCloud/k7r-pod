@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  namespace: k7r-system
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::269733383066:role/k7r-worker-role"
+    eks.amazonaws.com/token-expiration: "86400"
