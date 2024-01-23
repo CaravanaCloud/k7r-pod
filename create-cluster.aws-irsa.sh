@@ -33,21 +33,21 @@ oc adm release extract \
   --credentials-requests \
   --included \
   --install-config=./install-config.yaml \
-  --to="credentials-requests"
+  --to=".cco-requests"
 
 echo "Adding Karpenter credentials request..."
-cp ./credrequests/* ./credentials-requests
+cp ./credential-request-irsa/* ./.cco-requests
 
 echo "Creating CCO resources..."
 ccoctl aws create-all \
-      --credentials-requests-dir="credentials-requests" \
+      --credentials-requests-dir=".cco-requests" \
       --name="${ENV_ID}cco" \
       --region="$AWS_REGION" \
-      --output-dir="ccoctl-output"
+      --output-dir=".cco-out"
 
 echo "Creating manifests..."
 openshift-install create manifests
-cp ./ccoctl-output/manifests/* ./manifests/
+cp ./.cco-out/manifests/* ./manifests/
 
 echo "Creating cluster..."
 sleep 5

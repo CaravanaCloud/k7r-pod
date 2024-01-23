@@ -11,4 +11,5 @@ rm -rf k7r-poc/.*.json
 rm -rf .*.csv
 rm -rf .*.yaml
 rm -rf data/*
-rm -rf ccoctl-outputs-irsa
+rm -rf cco-outputs-irsa
+rm -rf ccoctl-output
