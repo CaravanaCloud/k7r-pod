@@ -20,7 +20,7 @@ auth
 .*.json
 .*.csv
 
-cco-outputs-irsa
+.cco*
 ccoctl-output
 credentials-requests
 .*.yaml
