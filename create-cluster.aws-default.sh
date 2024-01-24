@@ -8,7 +8,7 @@ PATH="${BIN_DIR}:${PATH}"
 export PREFIX="k7rcluster"
 export TODAY="$(date +%d%b | tr '[:upper:]' '[:lower:]')"
 export CLUSTER_NAME="$PREFIX$TODAY"
-export BASE_DOMAIN="devcluster.openshift.com"
+export BASE_DOMAIN="lab-scaling.devcluster.openshift.com"
 export AWS_REGION="us-east-1"
 export SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6a.2xlarge"}
@@ -23,15 +23,6 @@ aws sts get-caller-identity
 envsubst < "install-config.aws-default.env.yaml" > "install-config.yaml"
 DATE_STAMP=$(date +%Y%m%d%H%M%S)
 cp "install-config.yaml" ".install-config.${DATE_STAMP}.yaml" 
-
-RELEASE_IMAGE=$(./openshift-install version | awk '/release image/ {print $3}')
-        echo "RELEASE_IMAGE=${RELEASE_IMAGE}" 
-        oc adm release extract \
-          --from=$RELEASE_IMAGE \
-          --credentials-requests \
-          --included \
-          --install-config=./install-config.yaml \
-          --to="credentials-requests"
 
 echo "Creating cluster..."
 sleep 5
@@ -58,3 +49,4 @@ else
 fi
 
 echo "create cluster done"
+exit 0
