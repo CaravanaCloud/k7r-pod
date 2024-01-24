@@ -9,16 +9,14 @@ export PREFIX="k7r"
 export ENV_ID="$(head -c 4 /etc/machine-id)"
 export TODAY="$(date +%d%b | tr '[:upper:]' '[:lower:]')"
 export CLUSTER_NAME="$PREFIX$TODAY$ENV_ID"
-
 export BASE_DOMAIN="lab-scaling.devcluster.openshift.com"
+echo "Creating cluster $CLUSTER_NAME.$BASE_DOMAIN"
+
 export AWS_REGION="us-east-1"
 export SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
 export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6.2xlarge"}
 
-echo "Creating cluster $CLUSTER_NAME.$BASE_DOMAIN"
-
-# AWS Check
-echo "AWS: $AWS_REGION ($INSTANCE_TYPE)"
+echo "Checking AWS $AWS_REGION ($INSTANCE_TYPE)"
 aws sts get-caller-identity
 
 echo "Generating install-config"
