@@ -14,7 +14,7 @@ echo "Creating cluster $CLUSTER_NAME.$BASE_DOMAIN"
 
 export AWS_REGION="us-east-1"
 export SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
-export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6.2xlarge"}
+export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6a.2xlarge"}
 echo "Checking AWS $AWS_REGION ($INSTANCE_TYPE)"
 aws sts get-caller-identity
 
