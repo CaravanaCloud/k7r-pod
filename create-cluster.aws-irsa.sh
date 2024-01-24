@@ -50,6 +50,7 @@ ccoctl aws create-all \
 echo "Creating manifests..."
 openshift-install create manifests
 cp ./.cco-out/manifests/* ./manifests/
+cp -a ./manifests ./.manifests.${DATE_STAMP}
 
 echo "Creating cluster..."
 sleep 5
