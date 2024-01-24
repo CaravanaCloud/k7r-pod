@@ -5,9 +5,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BIN_DIR="${DIR}/bin"
 PATH="${BIN_DIR}:${PATH}"
 
-export PREFIX="k7rirsa1"
+export PREFIX="k7r"
+export ENV_ID="$(head -c 4 /etc/machine-id)"
 export TODAY="$(date +%d%b | tr '[:upper:]' '[:lower:]')"
-export CLUSTER_NAME="$PREFIX$TODAY"
+export CLUSTER_NAME="$PREFIX$TODAY$ENV_ID"
+
 export BASE_DOMAIN="lab-scaling.devcluster.openshift.com"
 export AWS_REGION="us-east-1"
 export SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
