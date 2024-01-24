@@ -1,10 +1,7 @@
 # gitpod.io/#github.com/CaravanaCloud/k7r-pod
+
 image:
   file: .gitpod.Dockerfile
-
-additionalRepositories:
-    - url: https://github.com/aws-ia/terraform-aws-eks-blueprints-addon
-      checkoutLocation: terraform-aws-eks-blueprints-addon
 
 tasks:
   - name: Welcome
@@ -34,4 +31,7 @@ vscode:
     - esbenp.prettier-vscode
 
 additionalRepositories:
-  - url: https://github.com/CaravanaCloud/sitting-ducks
+    - url: https://github.com/CaravanaCloud/sitting-ducks
+      checkoutLocation: sitting-ducks
+    - url: https://github.com/aws-ia/terraform-aws-eks-blueprints-addon
+      checkoutLocation: terraform-aws-eks-blueprints-addon
