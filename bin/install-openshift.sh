@@ -6,7 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 #BASE_URL="https://openshift-release-artifacts.apps.ci.l2s4.p1.openshiftapps.com"
 #VERSION_TAG="4.15.0-rc.2"
 BASE_URL="https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/latest"
-VERSION_TAG="4.14.8" 
+VERSION_TAG="4.14.10" 
 
 # Clean
 rm -f "${DIR}/openshift-install"
