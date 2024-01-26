@@ -1,6 +1,18 @@
 #!/bin/bash 
+
+echo "Scaling down machine set"
+oc scale machineset -n openshift-machine-api --replicas=0 $(oc get machineset -n openshift-machine-api -o jsonpath='{.items[2].metadata.name}')
+
 export KARPENTER_NAMESPACE=karpenter
-export KARPENTER_VERSION=v0.27.0
+echo "Creating base namespace"
+oc apply -f deploy-karpenter-base.k8s.yaml
+kubectl config set-context --current --namespace=$KARPENTER_NAMESPACE
+
+echo "Creating CSR approver"
+oc apply -f deploy-karpenter-csr-approver.k8s.yaml
+
+echo "Fetching cluster data..."
+export KARPENTER_VERSION="v0.33.1"
 export CLUSTER_NAME=$(oc get infrastructures cluster -o jsonpath='{.status.infrastructureName}')
 export WORKER_PROFILE=$(oc get machineset -n openshift-machine-api $(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.name}') -o json | jq -r '.spec.template.spec.providerSpec.value.iamInstanceProfile.id')
 export KUBE_ENDPOINT=$(oc get infrastructures cluster -o jsonpath='{.status.apiServerInternalURI}')
@@ -15,20 +27,25 @@ EOF
 
 # Create the karpenter chart/helm repo
 # https://artifacthub.io/packages/helm/karpenter/karpenter
+echo "Adding karpenter repo..."
 helm repo add karpenter https://charts.karpenter.sh/
 
-# Install it, without waiting 
+# Install karpenter, without waiting 
 helm upgrade --install --namespace karpenter \
   karpenter karpenter/karpenter \
-  --version 0.16.3 \
-  --set clusterName=${CLUSTER_NAME} \
-  --set aws.defaultInstanceProfile=$WORKER_PROFILE \
-  --set settings.cluster-endpoint=$KUBE_ENDPOINT 
+  --version "$KARPENTER_CHART_VERSION" \
+  --set "clusterName=${CLUSTER_NAME}" \
+  --set "settings.clusterName=${CLUSTER_NAME}" \
+  --set "settings.interruptionQueue=${CLUSTER_NAME}" \
+  --set "aws.defaultInstanceProfile=$WORKER_PROFILE" \
+  --set "settings.cluster-endpoint=$KUBE_ENDPOINT" 
+#  --set controller.resources.requests.cpu=1 \
+#  --set controller.resources.requests.memory=1Gi \
+#  --set controller.resources.limits.cpu=1 \
+#  --set controller.resources.limits.memory=1Gi \
+#  --wait
 
-kubectl config set-context --current --namespace=$KARPENTER_NAMESPACE
-
-# Patches
-#
+echo "Patching karpenter"
 
 # 1) remove webhooks
 oc delete validatingwebhookconfiguration validation.webhook.config.karpenter.sh
@@ -47,9 +64,9 @@ oc set volume deployment.apps/karpenter --add -t secret -m /var/secrets/karpente
 # 4) set env vars
 oc set env deployment.apps/karpenter AWS_REGION=us-east-1 AWS_SHARED_CREDENTIALS_FILE=/var/secrets/karpenter/credentials CLUSTER_ENDPOINT=$KUBE_ENDPOINT
 
-###############
+echo "Fetching MachineSet data..."
 
-AWS_REGION=us-east-1
+AWS_REGION=$(aws configure get region)
 INFRA_NAME=$(oc get infrastructure cluster -o jsonpath='{.status.infrastructureName}')
 MACHINESET_NAME=$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.name}')
 MACHINESET_SUBNET_NAME=$(oc get machineset -n openshift-machine-api $MACHINESET_NAME -o json | jq -r '.spec.template.spec.providerSpec.value.subnet.filters[0].values[0]')
@@ -71,81 +88,13 @@ MACHINESET_USER_DATA_SECRET=$MACHINESET_USER_DATA_SECRET
 MACHINESET_USER_DATA=$MACHINESET_USER_DATA
 EOF
 
-cat << EOF > ./kpt-provisioner-m6.yaml
-# https://karpenter.sh/v0.30/concepts/provisioners/
-apiVersion: karpenter.sh/v1alpha5
-kind: Provisioner
-metadata:
-  name: "kpt-provisioner-m6"
-spec:
-  weight: 10
-  consolidation:
-    enabled: true
-  labels:
-    Environment: karpenter
-  
-  # Resource limits constrain the total size of the cluster.
-  # Limits prevent Karpenter from creating new instances once the limit is exceeded.
-  limits:
-    resources:
-      cpu: "128"
-      memory: 256Gi
-  labels:
-    node-role.kubernetes.io/app: ""
-    node-role.kubernetes.io/worker: ""
-  requirements:
-    - key: karpenter.k8s.aws/instance-category
-      operator: In
-      values: [m]
-    - key: karpenter.k8s.aws/instance-generation
-      operator: In
-      values: ["6"]
-    - key: "topology.kubernetes.io/zone"
-      operator: In
-      values: ["${AWS_REGION}a","${AWS_REGION}b","${AWS_REGION}c"]
-    - key: "kubernetes.io/arch"
-      operator: In
-      values: ["amd64"]
-    - key: "karpenter.sh/capacity-type"
-      operator: In
-      values: ["on-demand"]
-    - key: "karpenter.k8s.aws/instance-cpu"
-      operator: Gt
-      values: ["2"]
-    - key: "karpenter.k8s.aws/instance-memory"
-      operator: Gt
-      values: ["4096"]
-    - key: "karpenter.k8s.aws/instance-pods"
-      operator: Gt
-      values: ["20"]
-  providerRef:
-    name: "kpt-${MACHINESET_NAME}"
+envsubst < ./kpt-provisioner-m6.env.yaml  > ./.kpt-provisioner-m6.yaml
 
----
-apiVersion: karpenter.k8s.aws/v1alpha1
-kind: AWSNodeTemplate
-metadata:
-  name: "kpt-${MACHINESET_NAME}"
-spec:
-  subnetSelector:
-    kubernetes.io/cluster/${INFRA_NAME}: owned
-    kubernetes.io/role/internal-elb: ""
-  securityGroupSelector:
-    Name: "${MACHINESET_SG_NAME}"
-  instanceProfile: "${MACHINESET_INSTANCE_PROFILE}"
-  amiFamily: Custom
-  tags:
-    cluster_name: $CLUSTER_NAME
-    Environment: autoscaler
-  amiSelector:
-    aws-ids: "${MACHINESET_AMI_ID}"
-  userData: |
-    $MACHINESET_USER_DATA
-EOF
-
-# Check if all vars have been replaced in ./kpt-provisioner-m6.yaml
-less ./kpt-provisioner-m6.yaml
+cat ./.kpt-provisioner-m6.yaml
 
 # Apply the config
 
-oc create -f ./kpt-provisioner-m6.yaml
+oc create -f ./.kpt-provisioner-m6.yaml
+
+oc get provisioner
+oc get AWSNodeTemplate
