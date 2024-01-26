@@ -24,3 +24,7 @@ auth
 ccoctl-output
 credentials-requests
 .*.yaml
+.install-config
+.manifests.*
+.install-dir
+

@@ -1,0 +1,69 @@
+# https://karpenter.sh/v0.30/concepts/provisioners/
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: "kpt-provisioner-m6"
+spec:
+  weight: 10
+  consolidation:
+    enabled: true
+  labels:
+    Environment: karpenter
+  
+  # Resource limits constrain the total size of the cluster.
+  # Limits prevent Karpenter from creating new instances once the limit is exceeded.
+  limits:
+    resources:
+      cpu: "128"
+      memory: 256Gi
+  labels:
+    node-role.kubernetes.io/app: ""
+    node-role.kubernetes.io/worker: ""
+  requirements:
+    - key: karpenter.k8s.aws/instance-category
+      operator: In
+      values: [m]
+    - key: karpenter.k8s.aws/instance-generation
+      operator: In
+      values: ["6"]
+    - key: "topology.kubernetes.io/zone"
+      operator: In
+      values: ["us-east-1a","us-east-1b","us-east-1c"]
+    - key: "kubernetes.io/arch"
+      operator: In
+      values: ["amd64"]
+    - key: "karpenter.sh/capacity-type"
+      operator: In
+      values: ["on-demand"]
+    - key: "karpenter.k8s.aws/instance-cpu"
+      operator: Gt
+      values: ["2"]
+    - key: "karpenter.k8s.aws/instance-memory"
+      operator: Gt
+      values: ["4096"]
+    - key: "karpenter.k8s.aws/instance-pods"
+      operator: Gt
+      values: ["20"]
+  providerRef:
+    name: "kpt-k7rmtuliob-pqsrh-worker-us-east-1a"
+
+---
+apiVersion: karpenter.k8s.aws/v1alpha1
+kind: AWSNodeTemplate
+metadata:
+  name: "kpt-k7rmtuliob-pqsrh-worker-us-east-1a"
+spec:
+  subnetSelector:
+    kubernetes.io/cluster/k7rmtuliob-pqsrh: owned
+    kubernetes.io/role/internal-elb: ""
+  securityGroupSelector:
+    Name: "k7rmtuliob-pqsrh-worker-sg"
+  instanceProfile: "k7rmtuliob-pqsrh-worker-profile"
+  amiFamily: Custom
+  tags:
+    cluster_name: k7rmtuliob-pqsrh
+    Environment: autoscaler
+  amiSelector:
+    aws-ids: "ami-00d973a79002d742b"
+  userData: |
+    {"ignition":{"config":{"merge":[{"source":"https://api-int.k7rmtuliob.lab-scaling.devcluster.openshift.com:22623/config/worker"}]},"security":{"tls":{"certificateAuthorities":[{"source":"data:text/plain;charset=utf-8;base64,LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURFRENDQWZpZ0F3SUJBZ0lJQ1kwM0grcGU1bnN3RFFZSktvWklodmNOQVFFTEJRQXdKakVTTUJBR0ExVUUKQ3hNSmIzQmxibk5vYVdaME1SQXdEZ1lEVlFRREV3ZHliMjkwTFdOaE1CNFhEVEkwTURFeU5qRXpNRE13TUZvWApEVE0wTURFeU16RXpNRE13TUZvd0pqRVNNQkFHQTFVRUN4TUpiM0JsYm5Ob2FXWjBNUkF3RGdZRFZRUURFd2R5CmIyOTBMV05oTUlJQklqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FROEFNSUlCQ2dLQ0FRRUF6TFdseGJNcGtUdHQKL2xWZWdWMmpTSGd5aGM5dnE1VURjT3I4bHZSTk8wOVpKbEtGMWdLOFhndzhicnI4VWpKT2ZBQXMvbFlldTgzTApKcE1lUk5TaFBmNjJBWmlLUGx5VDc4d3dRQjRFdGpYRDByQWU2UisvV3lJWHZWTmZMWXcrYUVPeCttOGdWWGdrCnpWQkVKcUhFWERjY2pFUDhJdCtCTzQ0KzFQR3dVRjk3S3NRWkZpOU0yemJJcCtqL05BNWN0VTAxbXlXb3pYWmwKSlRBbzk0YkRZNFVteGV0Lzkzb2psbDdiUHhJSkx5Q2pHNTlHMS82WkNxcCtZeFZJV3V4VTd6MWpEMTFyNURTRgpicldzQVllU2JxbVcwbEppVXhUbjBCRFFReStQQTZlWGJmNW5kcjU1Ym02dUxENmlzbHFJL0NldTREQlRwRS93CnpOOHlWWEFoaFFJREFRQUJvMEl3UURBT0JnTlZIUThCQWY4RUJBTUNBcVF3RHdZRFZSMFRBUUgvQkFVd0F3RUIKL3pBZEJnTlZIUTRFRmdRVXdqbXplTzV2UFBkUWJTTGxUcGFmOTJDMEF1OHdEUVlKS29aSWh2Y05BUUVMQlFBRApnZ0VCQUdsUUdTb3V2RWFiWmp4TE0weUpmN2xVNlpmb1RHazhBczRlR2JHRjlJMEJ5WGpSVDFYWklTVE5LSEorCjE2MnRxTDdQRGR6SDVIZmN5OCs0SVgramFRelpaQ1RNaFd3K0xRWWNtYlBCT0tHYitFdmZ5aFZOWnd2MUJVL0wKMkU1YjdkNlFaOVRIb0l5cnE1aWhIbVpYZ0gvSFhacmNRUDZ3b3dDOStmSG5SMHNzZWd4M0MvWDgzeldqcFVyaQpJR211NTZyRXlkODRMU1BGWnFONnBBYzU5MTJUN2RiblNGUEExSU9YSG84SnRUR2Z0a3hhTWVUV0RrenNvV1FZCmNWRlZaOTJZMmoxNHQ4dXpCYU9kWGhSVDZGbFZvM2FHN283U1hzTkVld3c4RlNFaUJvMkpCWWZGS1g1ZHE4dkkKRlhDQloyMk83VHhXUDdEK3FOQTROQ09acFA4PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg=="}]}},"version":"3.2.0"}}

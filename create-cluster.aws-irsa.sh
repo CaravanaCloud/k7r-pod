@@ -5,29 +5,26 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 BIN_DIR="${DIR}/bin"
 PATH="${BIN_DIR}:${PATH}"
 
-export PREFIX="k7r"
+export PREFIX="k7r2irsa"
+
 export ENV_ID="$(head -c 4 /etc/machine-id)"
 export TODAY="$(date +%d%b | tr '[:upper:]' '[:lower:]')"
 export CLUSTER_NAME="$PREFIX$TODAY$ENV_ID"
 export BASE_DOMAIN="lab-scaling.devcluster.openshift.com"
 echo "Creating cluster $CLUSTER_NAME.$BASE_DOMAIN"
 
-export AWS_REGION="us-east-1"
+export AWS_REGION=$(aws configure get region)
 export SSH_KEY=$(cat ~/.ssh/id_rsa.pub)
-export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6.2xlarge"}
+export INSTANCE_TYPE=${INSTANCE_TYPE:-"m6a.2xlarge"}
 
 echo "Checking AWS $AWS_REGION ($INSTANCE_TYPE)"
 aws sts get-caller-identity
 
 echo "Generating install-config"
 envsubst < "install-config.aws-irsa.env.yaml" > "install-config.yaml"
-DATE_STAMP=$(date +%Y%m%d%H%M%S)
-cp "install-config.yaml" ".install-config.${DATE_STAMP}.yaml" 
-
-
-RELEASE_IMAGE=$(openshift-install version | awk '/release image/ {print $3}')
 
 echo "Extracting credentials requests from RELEASE_IMAGE=${RELEASE_IMAGE}" 
+RELEASE_IMAGE=$(openshift-install version | awk '/release image/ {print $3}')
 oc adm release extract \
   --from=$RELEASE_IMAGE \
   --credentials-requests \
@@ -47,8 +44,16 @@ ccoctl aws create-all \
 
 echo "Creating manifests..."
 openshift-install create manifests
+
+echo "Copying CCO manifests and tls"
 cp ./.cco-out/manifests/* ./manifests/
+cp -a ./.cco-out/tls ./
+
+DATE_STAMP=$(date +%Y%m%d%H%M%S)
+echo "Backing up [$DATE_STAMP]"
 cp -a ./manifests ./.manifests.${DATE_STAMP}
+cp "install-config.yaml" ".install-config.${DATE_STAMP}.yaml" 
+
 
 echo "Creating cluster..."
 sleep 5
