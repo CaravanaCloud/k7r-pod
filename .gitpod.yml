@@ -7,11 +7,14 @@ tasks:
   - name: Welcome
     init: |
       mkdir -p "$HOME/.kube"
-      ln -sf "$GITPOD_REPO_ROOT/auth/kubeconfig" "$HOME/.kube/config"
+      ln -s /workpace/sitting-ducks /workpace/k7r-pod/sitting-ducks
       echo "Init k7r-pod at $(date)"
     command: echo "Let's karpenter :)"
 
 ports:
+  - port: 3030
+    onOpen: ignore
+    visibility: public
   - port: 8080
     onOpen: ignore
     visibility: public
