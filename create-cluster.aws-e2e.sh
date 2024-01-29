@@ -2,24 +2,21 @@
 set -x
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-
 PULL_SECRET_FILE="${HOME}/.openshift/pull-secret-latest.json"
 RELEASE_IMAGE=quay.io/openshift-release-dev/ocp-release:${VERSION}-x86_64
 SSH_PUB_KEY_FILE="$HOME/.ssh/id_rsa.pub"
 
-export DATE_STAMP=$(date +%d%b | tr "[:upper:]" "[:lower:]")
-export CLUSTER_NAME="k7rmtulio$DATE_STAMP"
 export CLUSTER_BASE_DOMAIN="lab-scaling.devcluster.openshift.com"
 export REGION="us-east-1"
 export SSH_KEY=$(cat $SSH_PUB_KEY_FILE)
-export INSTALL_DIR="${DIR}/.install-dir/$CLUSTER_NAME"
+
 
 rm -rf $INSTALL_DIR
 mkdir -p $INSTALL_DIR
 
 echo "> Creating ${INSTALL_DIR}/install-config.yaml"
 mkdir -p ${INSTALL_DIR}
-envsubst < install-config.aws-mtulio.env.yaml > ${INSTALL_DIR}/install-config.yaml 
+envsubst < install-config.aws-e2e.env.yaml > ${INSTALL_DIR}/install-config.yaml 
 cp ${INSTALL_DIR}/install-config.yaml ${INSTALL_DIR}/install-config.bkp.yaml
 
 openshift-install create cluster --dir=$INSTALL_DIR --log-level=debug
