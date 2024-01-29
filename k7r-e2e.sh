@@ -18,5 +18,9 @@ fi
 echo "Creating new cluster [$ENV_ID]"
 source ./create-cluster.aws-e2e.sh
 
+echo "Soundcheck"
+oc cluster-info
+oc get nodes
+
 echo "Destroying cluster [$ENV_ID]"
 source ./destroy-cluster.e2e.sh

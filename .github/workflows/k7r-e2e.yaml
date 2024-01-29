@@ -1,0 +1,26 @@
+name: Karpenter end-to-end test
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  create-okd-cluster:
+    runs-on: ubuntu-latest
+      
+    steps:
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.K7R_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.k7R_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Check AWS auth
+      run: aws sts get-caller-identity
+        
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Karpenter end-to-end test
+      run: ./k7r-e2e.sh
